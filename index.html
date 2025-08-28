@@ -152,6 +152,17 @@
     .orb { position:absolute; border-radius:50%; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.85), rgba(255,122,191,.18) 60%, transparent 70%);
       box-shadow: 0 0 24px rgba(255,122,191,.18); animation: float 8s ease-in-out infinite; filter: blur(.2px); }
     @keyframes float { 0%,100%{ transform: translateY(-6px)} 50%{ transform: translateY(6px)} }
+
+    /* Ember finale (fire vibe) */
+    .embers { position:absolute; inset:0; pointer-events:none; opacity:0; transition: opacity 600ms ease; }
+    .slideshow.ember .embers { opacity:.85; }
+    .spark { position:absolute; width:2px; height:2px; border-radius:50%; background: rgba(255,150,80,.95);
+      box-shadow: 0 0 6px rgba(255,140,80,.9), 0 0 12px rgba(255,70,120,.5);
+      animation: rise 4.5s linear infinite; }
+    @keyframes rise { 0%{ transform: translateY(20px) translateX(0) scale(.7); opacity:0 } 10%{ opacity:1 }
+      100%{ transform: translateY(-120%) translateX(-12px) scale(1.15); opacity:0 } }
+    .fancyfire { background: linear-gradient(90deg, #ff8a00, #ff3d81, #ff8a00); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: firegrad 6s linear infinite; text-shadow: 0 0 8px rgba(255,100,60,.35); }
+    @keyframes firegrad { 0%{ background-position: 0% 50% } 100%{ background-position: 200% 50% } }
   </style>
   <meta name="description" content="a soft soho whisper — a gentle flight of hearts" />
   <meta name="robots" content="noindex, nofollow" />
@@ -166,6 +177,7 @@
       <pre id="asciiFrame" class="ascii"></pre>
       <div class="petals" id="petals" aria-hidden="true"></div>
       <div class="orbs" id="orbs" aria-hidden="true"></div>
+      <div class="embers" id="embers" aria-hidden="true"></div>
       <div class="caption" id="caption">chapter i — dusk</div>
     </div>
     <div class="ps">a gentle flight of hearts, for her <span style="color:var(--heart)">&lt;3</span></div>
@@ -211,14 +223,21 @@
             2) your smile bends orbits
             3) your laugh resets gravity
             4) your kindness softens time
-            5) goodnight, annusha — always, gently, yes`
+           5) goodnight, annusha — always, gently, yes`,
+
+`        ꧁༺  ⟡  ༻꧂
+
+         <span class="fancyfire">𝒅𝑒𝒂𝒅𝒂𝓼𝓼 𝓶𝔂 𝒄𝓻𝓾𝓼𝒉</span>
+
+        ꧁༺  ⟡  ༻꧂`
     ];
 
     const captions = [
       'chapter i — dusk',
       'chapter ii — petal wind',
       'chapter iii — blossom reveal',
-      'epilogue — whisper orbs'
+      'epilogue — whisper orbs',
+      'finale — ember vow'
     ];
 
     const frameEl = document.getElementById('asciiFrame');
@@ -230,11 +249,16 @@
       captionEl.textContent = captions[i] || '';
       frameEl.classList.remove('show');
       setTimeout(()=>{
-        frameEl.textContent = frames[i];
+        if (frames[i].includes('<span')) {
+          frameEl.innerHTML = frames[i];
+        } else {
+          frameEl.textContent = frames[i];
+        }
         frameEl.classList.add('show');
-        // invert on the blossom reveal (index 2), show orbs on epilogue (index 3)
+        // invert on the blossom reveal (index 2), show orbs on epilogue (index 3), embers on finale (index 4)
         slideEl.classList.toggle('invert', i === 2);
         slideEl.classList.toggle('whisper', i === 3);
+        slideEl.classList.toggle('ember', i === 4);
       }, 350);
     }
 
@@ -268,6 +292,19 @@
       o.style.animationDuration = (6 + Math.random()*6) + 's';
       o.style.animationDelay = (Math.random()*-6) + 's';
       orbsHost.appendChild(o);
+    }
+
+    // Embers for finale
+    const embersHost = document.getElementById('embers');
+    const EMBERS = 40;
+    for (let i=0;i<EMBERS;i++){
+      const e = document.createElement('div');
+      e.className = 'spark';
+      e.style.left = (10 + Math.random()*80) + 'vw';
+      e.style.bottom = (Math.random()*12) + 'px';
+      e.style.animationDuration = (3.5 + Math.random()*3) + 's';
+      e.style.animationDelay = (Math.random()*-6) + 's';
+      embersHost.appendChild(e);
     }
 
     // Cycle frames slowly, Samurai-poetic pacing
