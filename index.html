@@ -13,6 +13,7 @@
       --flag-green: #0a7d35;
       --flag-white: #ffffff;
       --pole: #847a99;
+      --ascii-max: 24px; /* max ASCII font size */
     }
     :root { --frame-ms: 6500; --cut-ms: 380ms; }
     html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden; }
@@ -128,7 +129,7 @@
       white-space: pre;
       text-align: center;
       line-height: 1.15;
-      font-size: clamp(12px, 2.8vw, 24px);
+      font-size: clamp(12px, 2.8vw, var(--ascii-max));
       letter-spacing: 0.2px;
       color: var(--fg);
       opacity: 0;
@@ -140,7 +141,16 @@
       position: absolute; inset: 0; display: grid; place-items: center;
     }
     .ascii.show { opacity: 1; transform: translateY(0); }
-    .caption { position: absolute; bottom: 18px; left: 20px; font-size: 12px; color: var(--muted); opacity: .85; user-select: none; }
+    .caption { position: absolute; bottom: 18px; left: 20px; font-size: 12px; color: var(--muted); opacity: .85; user-select: none; z-index: 4; }
+    /* Bokeh canvas sits at the back */
+    #bokeh { position: absolute; inset: 0; z-index: 0; opacity: .55; }
+    /* Minimal settings toggle */
+    .gear { position: absolute; top: 14px; right: 16px; z-index: 5; cursor: pointer; color: var(--muted); opacity: .8; user-select: none; }
+    .panel { position: absolute; top: 44px; right: 16px; z-index: 6; background: rgba(20,16,26,.7); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 10px 12px; width: 240px; display: none; }
+    .panel.show { display: block; }
+    .panel label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); margin: 6px 0; gap: 8px; }
+    .panel input[type="range"] { width: 130px; }
+    .badge { position: absolute; right: 16px; bottom: 18px; z-index: 4; font-size: 11px; color: var(--muted); opacity: .85; user-select: none; }
     /* Blossom petals */
     .petals { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
     .petal { position:absolute; top:-10px; color: var(--heart); opacity: .85; font-size: 14px; filter: drop-shadow(0 2px 0 rgba(0,0,0,.35)); animation: fall linear infinite; }
@@ -178,12 +188,23 @@
   <div class="card" role="img" aria-label="Plane flying toward a waving Pakistani flag with heart contrail and a message to Annusha.">
     <h1>soho whisper</h1>
     <div class="slideshow" id="slideshow" role="img" aria-label="Samurai blossom ASCII slideshow for Annusha.">
+      <canvas id="bokeh" aria-hidden="true"></canvas>
       <pre id="asciiA" class="ascii" aria-live="polite"></pre>
       <pre id="asciiB" class="ascii" aria-live="polite"></pre>
       <div class="petals" id="petals" aria-hidden="true"></div>
       <div class="orbs" id="orbs" aria-hidden="true"></div>
       <div class="embers" id="embers" aria-hidden="true"></div>
       <div class="caption" id="caption">chapter i — dusk</div>
+      <div class="gear" id="gear" title="settings">⚙</div>
+      <div class="panel" id="panel" role="dialog" aria-modal="false" aria-label="settings">
+        <label>frame (ms) <input id="frameMs" type="range" min="3500" max="9000" step="250"></label>
+        <label>cut (ms) <input id="cutMs" type="range" min="160" max="800" step="20"></label>
+        <label>max size <input id="maxPx" type="range" min="16" max="32" step="1"></label>
+        <label><span>hide title</span> <input id="hideTitle" type="checkbox"></label>
+        <label><span>density</span> <select id="density"><option>low</option><option selected>medium</option><option>high</option></select></label>
+        <small style="color:var(--muted)">tap Space/→ to quick‑cut, P to pause</small>
+      </div>
+      <div class="badge" id="badge" aria-live="polite"></div>
     </div>
     <div class="ps">a gentle flight of hearts, for her <span style="color:var(--heart)">&lt;3</span></div>
     <div class="small">[ a + a ]</div>
@@ -192,9 +213,9 @@
 <script>
   (function(){
     // Config — expert-tuned pacing, can be tweaked quickly
-    const FRAME_MS = 6500;      // time each frame is visible (cinematic)
-    const CUT_MS = 380;         // crossfade duration (smoother)
-    const FAST_CUT_MS = 280;    // used when user advances manually
+    let FRAME_MS = 6500;      // time each frame is visible (cinematic)
+    let CUT_MS = 380;         // crossfade duration (smoother)
+    let FAST_CUT_MS = 280;    // used when user advances manually
 
     // Frame model — predictable, explicit, zero string sniffing
     /** @type {{html?:boolean, content:string, caption:string, invert?:boolean, whisper?:boolean, ember?:boolean}[]} */
@@ -263,6 +284,18 @@
     const captionEl = document.getElementById('caption');
     const frameA = document.getElementById('asciiA');
     const frameB = document.getElementById('asciiB');
+    const canvas = document.getElementById('bokeh');
+    const gear = document.getElementById('gear');
+    const panel = document.getElementById('panel');
+    const badge = document.getElementById('badge');
+    const titleEl = document.querySelector('h1');
+    const controlEls = {
+      frameMs: document.getElementById('frameMs'),
+      cutMs: document.getElementById('cutMs'),
+      maxPx: document.getElementById('maxPx'),
+      hideTitle: document.getElementById('hideTitle'),
+      density: document.getElementById('density'),
+    };
 
     // Build ambient layers once
     const petalHost = document.getElementById('petals');
@@ -272,30 +305,33 @@
     const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     const reduce = mqReduce.matches;
 
-    // Petals
-    (function makePetals(){
-      const PETALS = reduce ? 0 : 28;
+    // Ambient builders with density control
+    function clearChildren(node){ while(node.firstChild) node.removeChild(node.firstChild); }
+    function makePetals(density){
+      clearChildren(petalHost);
+      const base = density==='high'? 34 : density==='low'? 16 : 28;
+      const PETALS = reduce ? 0 : base;
       const glyphs = ['✿','❀','✾','✧','♥','♡'];
       for (let i=0;i<PETALS;i++){
         const s = document.createElement('span');
         s.className = 'petal';
         s.textContent = glyphs[i % glyphs.length];
         s.style.left = Math.random()*100 + 'vw';
-        const dur = 6 + Math.random()*7; // 6–13s, tighter for smoother feel
+        const dur = 6 + Math.random()*7; // 6–13s
         const delay = Math.random()*-dur;
         s.style.animationDuration = dur + 's';
         s.style.animationDelay = delay + 's';
         petalHost.appendChild(s);
       }
-    })();
-
-    // Orbs (epilogue)
-    (function makeOrbs(){
-      const ORBS = reduce ? 0 : 14;
+    }
+    function makeOrbs(density){
+      clearChildren(orbsHost);
+      const base = density==='high'? 18 : density==='low'? 8 : 14;
+      const ORBS = reduce ? 0 : base;
       for (let i=0;i<ORBS;i++){
         const o = document.createElement('div');
         o.className = 'orb';
-        const size = 12 + Math.random()*24; // 12–36px
+        const size = 12 + Math.random()*24;
         o.style.width = size + 'px';
         o.style.height = size + 'px';
         o.style.left = Math.random()*100 + 'vw';
@@ -304,11 +340,11 @@
         o.style.animationDelay = (Math.random()*-6) + 's';
         orbsHost.appendChild(o);
       }
-    })();
-
-    // Embers (finale)
-    (function makeEmbers(){
-      const EMBERS = reduce ? 0 : 48;
+    }
+    function makeEmbers(density){
+      clearChildren(embersHost);
+      const base = density==='high'? 64 : density==='low'? 32 : 48;
+      const EMBERS = reduce ? 0 : base;
       for (let i=0;i<EMBERS;i++){
         const e = document.createElement('div');
         e.className = 'spark';
@@ -318,12 +354,13 @@
         e.style.animationDelay = (Math.random()*-6) + 's';
         embersHost.appendChild(e);
       }
-    })();
+    }
 
     // Crossfade engine (two layers)
     let i = 0;
     let useA = true;
     let timer = null;
+    let paused = false;
 
     function applyScene(scene){
       slideEl.classList.toggle('invert', !!scene.invert);
@@ -338,6 +375,7 @@
 
     function nextFrame(ms=CUT_MS){
       const idx = i % FRAMES.length;
+      if (paused) return; // do not advance when paused
       const current = FRAMES[idx];
       const targetEl = useA ? frameA : frameB;
       const otherEl = useA ? frameB : frameA;
@@ -356,15 +394,105 @@
     }
 
     // Start and allow click/tap/keyboard to advance with fast cut
+    // First render of ambience and frame
+    let density = 'medium';
+    makePetals(density); makeOrbs(density); makeEmbers(density);
     nextFrame(CUT_MS);
-    slideEl.addEventListener('click', ()=>{ clearTimeout(timer); nextFrame(FAST_CUT_MS); });
+
+    // Interactions
+    slideEl.addEventListener('click', ()=>{ if (paused) return; clearTimeout(timer); nextFrame(FAST_CUT_MS); });
     window.addEventListener('keydown', (e)=>{
       if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); clearTimeout(timer); nextFrame(FAST_CUT_MS); }
+      if (e.key.toLowerCase() === 'p') { paused = !paused; badge.textContent = paused ? 'paused' : ''; if (!paused) { clearTimeout(timer); nextFrame(CUT_MS); } }
     });
 
     // Reduced motion hard stop
     if (reduce) {
       document.documentElement.style.setProperty('--cut-ms', '0ms');
+    }
+
+    // Bokeh hearts canvas (GPU‑friendly 2D)
+    (function(){
+      const ctx = canvas.getContext('2d');
+      let dpr = window.devicePixelRatio || 1;
+      function rs(){
+        const {clientWidth:w, clientHeight:h} = canvas;
+        canvas.width = Math.max(1, Math.floor(w*dpr));
+        canvas.height = Math.max(1, Math.floor(h*dpr));
+      }
+      rs();
+      window.addEventListener('resize', rs);
+      const N = 22;
+      const hearts = new Array(N).fill(0).map(()=>({
+        x: Math.random(), y: Math.random(), r: .02 + Math.random()*.06, vx: (-.02 + Math.random()*.04), vy: (.005 + Math.random()*.015), p: Math.random()*Math.PI*2
+      }));
+      function drawHeart(x,y,s,alpha){
+        const g = ctx.createRadialGradient(x,y,0,x,y,s*1.2);
+        g.addColorStop(0, `rgba(255,122,191,${alpha})`);
+        g.addColorStop(1, `rgba(255,122,191,0)`);
+        ctx.fillStyle = g; ctx.beginPath();
+        // simple heart blob
+        ctx.moveTo(x, y);
+        ctx.bezierCurveTo(x-s, y-s, x-2*s, y+s*0.2, x, y+1.8*s);
+        ctx.bezierCurveTo(x+2*s, y+s*0.2, x+s, y-s, x, y);
+        ctx.fill();
+      }
+      function tick(){
+        if (!ctx) return;
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'lighter';
+        for (const h of hearts){
+          h.p += 0.01; h.x += h.vx*0.001; h.y -= h.vy*0.001;
+          if (h.y < -0.1) { h.y = 1.1; h.x = Math.random(); }
+          if (h.x < -0.1) h.x = 1.1; if (h.x > 1.1) h.x = -0.1;
+          const x = h.x*canvas.width, y = h.y*canvas.height; const s = h.r*canvas.height*0.6; const a = 0.12 + 0.08*Math.sin(h.p);
+          drawHeart(x,y,s,a);
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    })();
+
+    // Settings panel & URL params
+    function readParams(){
+      const q = new URLSearchParams(location.search);
+      const o = Object.create(null);
+      if (q.has('frameMs')) o.frameMs = +q.get('frameMs');
+      if (q.has('cutMs')) o.cutMs = +q.get('cutMs');
+      if (q.has('maxPx')) o.maxPx = +q.get('maxPx');
+      if (q.has('hideTitle')) o.hideTitle = q.get('hideTitle')==='1' || q.get('hideTitle')==='true';
+      if (q.has('density')) o.density = q.get('density');
+      if (q.has('title')) o.title = q.get('title');
+      return o;
+    }
+    const params = readParams();
+    if (params.frameMs) FRAME_MS = params.frameMs;
+    if (params.cutMs) { CUT_MS = params.cutMs; document.documentElement.style.setProperty('--cut-ms', CUT_MS+'ms'); }
+    if (params.maxPx) document.documentElement.style.setProperty('--ascii-max', params.maxPx+'px');
+    if (params.hideTitle) titleEl.style.display = 'none';
+    if (params.title) titleEl.textContent = params.title;
+    if (params.density) { density = ['low','medium','high'].includes(params.density)? params.density: density; makePetals(density); makeOrbs(density); makeEmbers(density); }
+
+    // Panel wiring
+    function syncPanel(){
+      controlEls.frameMs.value = FRAME_MS;
+      controlEls.cutMs.value = CUT_MS;
+      const mx = getComputedStyle(document.documentElement).getPropertyValue('--ascii-max').trim();
+      controlEls.maxPx.value = parseInt(mx || '24', 10);
+      controlEls.hideTitle.checked = (titleEl.style.display==='none');
+      controlEls.density.value = density;
+    }
+    syncPanel();
+    gear.addEventListener('click', ()=> panel.classList.toggle('show'));
+    controlEls.frameMs.addEventListener('input', e=>{ FRAME_MS = +e.target.value; badge.textContent = `frame ${FRAME_MS}ms`; setTimeout(()=> badge.textContent='', 1200); });
+    controlEls.cutMs.addEventListener('input', e=>{ CUT_MS = +e.target.value; document.documentElement.style.setProperty('--cut-ms', CUT_MS+'ms'); badge.textContent = `cut ${CUT_MS}ms`; setTimeout(()=> badge.textContent='', 1200); });
+    controlEls.maxPx.addEventListener('input', e=>{ document.documentElement.style.setProperty('--ascii-max', e.target.value+'px'); });
+    controlEls.hideTitle.addEventListener('change', e=>{ titleEl.style.display = e.target.checked? 'none':'block'; });
+    controlEls.density.addEventListener('change', e=>{ density = e.target.value; makePetals(density); makeOrbs(density); makeEmbers(density); });
+
+    // Service worker (offline)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', ()=> navigator.serviceWorker.register('./sw.js').catch(()=>{}));
     }
   })();
 </script>
