@@ -146,6 +146,12 @@
       50%  { transform: translateY(50vh) translateX(20px) rotate(120deg); }
       100% { transform: translateY(110%) translateX(-15px) rotate(260deg); opacity:.0; }
     }
+    /* Whisper orbs for the epilogue */
+    .orbs { position:absolute; inset:0; pointer-events:none; opacity:0; transition: opacity 800ms ease; }
+    .slideshow.whisper .orbs { opacity:.9; }
+    .orb { position:absolute; border-radius:50%; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.85), rgba(255,122,191,.18) 60%, transparent 70%);
+      box-shadow: 0 0 24px rgba(255,122,191,.18); animation: float 8s ease-in-out infinite; filter: blur(.2px); }
+    @keyframes float { 0%,100%{ transform: translateY(-6px)} 50%{ transform: translateY(6px)} }
   </style>
   <meta name="description" content="a soft soho whisper — a gentle flight of hearts" />
   <meta name="robots" content="noindex, nofollow" />
@@ -159,6 +165,7 @@
     <div class="slideshow" id="slideshow" role="img" aria-label="Samurai blossom ASCII slideshow for Annusha.">
       <pre id="asciiFrame" class="ascii"></pre>
       <div class="petals" id="petals" aria-hidden="true"></div>
+      <div class="orbs" id="orbs" aria-hidden="true"></div>
       <div class="caption" id="caption">chapter i — dusk</div>
     </div>
     <div class="ps">a gentle flight of hearts, for her <span style="color:var(--heart)">&lt;3</span></div>
@@ -196,13 +203,22 @@
         ✷    ✷    ✷    ✷    ✷    ✷
         
    bloom.     blossom.      become.      (for you)
-`
+`,
+
+`           five reasons, plain as moonlight:
+
+            1) your name slows my sky
+            2) your smile bends orbits
+            3) your laugh resets gravity
+            4) your kindness softens time
+            5) goodnight, annusha — always, gently, yes`
     ];
 
     const captions = [
       'chapter i — dusk',
       'chapter ii — petal wind',
-      'final — blossom reveal'
+      'chapter iii — blossom reveal',
+      'epilogue — whisper orbs'
     ];
 
     const frameEl = document.getElementById('asciiFrame');
@@ -216,7 +232,9 @@
       setTimeout(()=>{
         frameEl.textContent = frames[i];
         frameEl.classList.add('show');
-        slideEl.classList.toggle('invert', i === frames.length - 1);
+        // invert on the blossom reveal (index 2), show orbs on epilogue (index 3)
+        slideEl.classList.toggle('invert', i === 2);
+        slideEl.classList.toggle('whisper', i === 3);
       }, 350);
     }
 
@@ -234,6 +252,22 @@
       s.style.animationDuration = dur + 's';
       s.style.animationDelay = delay + 's';
       petalHost.appendChild(s);
+    }
+
+    // Orbs for epilogue
+    const orbsHost = document.getElementById('orbs');
+    const ORBS = 10;
+    for (let i=0;i<ORBS;i++){
+      const o = document.createElement('div');
+      o.className = 'orb';
+      const size = 10 + Math.random()*28; // 10–38px
+      o.style.width = size + 'px';
+      o.style.height = size + 'px';
+      o.style.left = Math.random()*100 + 'vw';
+      o.style.top = (10 + Math.random()*70) + 'px';
+      o.style.animationDuration = (6 + Math.random()*6) + 's';
+      o.style.animationDelay = (Math.random()*-6) + 's';
+      orbsHost.appendChild(o);
     }
 
     // Cycle frames slowly, Samurai-poetic pacing
