@@ -14,29 +14,29 @@
       --flag-white: #ffffff;
       --pole: #847a99;
     }
-    :root { --frame-ms: 6000; --cut-ms: 420ms; }
-    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); }
-    body { display: grid; place-items: center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    :root { --frame-ms: 5500; --cut-ms: 320ms; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden; }
+    body { display: grid; place-items: stretch; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
     .card {
-      width: min(900px, 92vw);
+      width: 100vw;
+      height: 100vh;
       background:
         radial-gradient(600px 180px at 20% 10%, rgba(255,182,219,0.08), transparent 40%),
         radial-gradient(700px 220px at 80% 80%, rgba(240,217,255,0.07), transparent 45%),
         linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 14px;
-      padding: 20px 22px 16px 22px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
       position: relative;
       overflow: hidden;
     }
-    h1 { font-size: 18px; margin: 0 0 8px 0; letter-spacing: 0.4px; font-family: "Playfair Display", Georgia, serif; font-weight: 500; }
+    h1 { position: absolute; top: 18px; left: 20px; font-size: 18px; margin: 0; letter-spacing: 0.4px; font-family: "Playfair Display", Georgia, serif; font-weight: 500; opacity: .85; }
     .row { display: none; }
-    .ps { margin-top: 10px; color: var(--fg); opacity: .9; }
-    .small { color: var(--muted); font-size: 12px; }
+    .ps, .small { display: none; }
 
     /* Scene */
-    .scene { position: relative; width: min(900px, 92vw); height: 260px; overflow: hidden; border-radius: 12px; background:
+    .scene { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 0; background:
       radial-gradient(1200px 420px at -10% 120%, rgba(255,255,255,0.04), transparent 40%),
       radial-gradient(800px 320px at 120% -10%, rgba(255,255,255,0.04), transparent 40%);
     }
@@ -109,11 +109,12 @@
     @keyframes shimmer { 0%,100%{opacity:.85} 50%{opacity:1} }
     /* Slideshow — Samurai Jack blossom vibe */
     .slideshow {
-      position: relative;
-      width: min(900px, 92vw);
-      height: 360px;
-      margin-top: 8px;
-      border-radius: 12px;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      border-radius: 0;
       overflow: hidden;
       display: grid;
       place-items: center;
@@ -127,11 +128,11 @@
       white-space: pre;
       text-align: center;
       line-height: 1.15;
-      font-size: clamp(12px, 2.1vw, 18px);
+      font-size: clamp(12px, 2.8vw, 24px);
       letter-spacing: 0.2px;
       color: var(--fg);
       opacity: 0;
-      transform: translateY(6px);
+      transform: translateY(4px);
       transition: opacity var(--cut-ms) cubic-bezier(.2,.6,.2,1), transform var(--cut-ms) cubic-bezier(.2,.6,.2,1);
       padding: 10px 12px;
       text-shadow: 0 1px 0 rgba(0,0,0,.5);
@@ -139,7 +140,7 @@
       position: absolute; inset: 0; display: grid; place-items: center;
     }
     .ascii.show { opacity: 1; transform: translateY(0); }
-    .caption { position: absolute; bottom: 10px; left: 12px; font-size: 12px; color: var(--muted); opacity: .8; user-select: none; }
+    .caption { position: absolute; bottom: 18px; left: 20px; font-size: 12px; color: var(--muted); opacity: .85; user-select: none; }
     /* Blossom petals */
     .petals { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
     .petal { position:absolute; top:-10px; color: var(--heart); opacity: .85; font-size: 14px; filter: drop-shadow(0 2px 0 rgba(0,0,0,.35)); animation: fall linear infinite; }
@@ -191,9 +192,9 @@
 <script>
   (function(){
     // Config — expert-tuned pacing, can be tweaked quickly
-    const FRAME_MS = 6000;      // time each frame is visible
-    const CUT_MS = 420;         // crossfade duration
-    const FAST_CUT_MS = 280;    // used when user advances manually
+    const FRAME_MS = 5500;      // time each frame is visible
+    const CUT_MS = 320;         // crossfade duration
+    const FAST_CUT_MS = 220;    // used when user advances manually
 
     // Frame model — predictable, explicit, zero string sniffing
     /** @type {{html?:boolean, content:string, caption:string, invert?:boolean, whisper?:boolean, ember?:boolean}[]} */
@@ -273,7 +274,7 @@
 
     // Petals
     (function makePetals(){
-      const PETALS = reduce ? 0 : 22;
+      const PETALS = reduce ? 0 : 26;
       const glyphs = ['✿','❀','✾','✧'];
       for (let i=0;i<PETALS;i++){
         const s = document.createElement('span');
@@ -290,7 +291,7 @@
 
     // Orbs (epilogue)
     (function makeOrbs(){
-      const ORBS = reduce ? 0 : 12;
+      const ORBS = reduce ? 0 : 14;
       for (let i=0;i<ORBS;i++){
         const o = document.createElement('div');
         o.className = 'orb';
@@ -307,7 +308,7 @@
 
     // Embers (finale)
     (function makeEmbers(){
-      const EMBERS = reduce ? 0 : 44;
+      const EMBERS = reduce ? 0 : 48;
       for (let i=0;i<EMBERS;i++){
         const e = document.createElement('div');
         e.className = 'spark';
