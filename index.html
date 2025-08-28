@@ -14,7 +14,7 @@
       --flag-white: #ffffff;
       --pole: #847a99;
     }
-    :root { --frame-ms: 5500; --cut-ms: 320ms; }
+    :root { --frame-ms: 6500; --cut-ms: 380ms; }
     html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden; }
     body { display: grid; place-items: stretch; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
     .card {
@@ -192,9 +192,9 @@
 <script>
   (function(){
     // Config — expert-tuned pacing, can be tweaked quickly
-    const FRAME_MS = 5500;      // time each frame is visible
-    const CUT_MS = 320;         // crossfade duration
-    const FAST_CUT_MS = 220;    // used when user advances manually
+    const FRAME_MS = 6500;      // time each frame is visible (cinematic)
+    const CUT_MS = 380;         // crossfade duration (smoother)
+    const FAST_CUT_MS = 280;    // used when user advances manually
 
     // Frame model — predictable, explicit, zero string sniffing
     /** @type {{html?:boolean, content:string, caption:string, invert?:boolean, whisper?:boolean, ember?:boolean}[]} */
@@ -274,8 +274,8 @@
 
     // Petals
     (function makePetals(){
-      const PETALS = reduce ? 0 : 26;
-      const glyphs = ['✿','❀','✾','✧'];
+      const PETALS = reduce ? 0 : 28;
+      const glyphs = ['✿','❀','✾','✧','♥','♡'];
       for (let i=0;i<PETALS;i++){
         const s = document.createElement('span');
         s.className = 'petal';
@@ -337,7 +337,8 @@
     }
 
     function nextFrame(ms=CUT_MS){
-      const current = FRAMES[i % FRAMES.length];
+      const idx = i % FRAMES.length;
+      const current = FRAMES[idx];
       const targetEl = useA ? frameA : frameB;
       const otherEl = useA ? frameB : frameA;
 
@@ -349,7 +350,8 @@
 
       useA = !useA;
       clearTimeout(timer);
-      timer = setTimeout(()=> nextFrame(CUT_MS), FRAME_MS);
+      const hold = (idx === FRAMES.length - 1) ? 1500 : 0; // gentle finale hold
+      timer = setTimeout(()=> nextFrame(CUT_MS), FRAME_MS + hold);
       i++;
     }
 
