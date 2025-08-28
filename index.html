@@ -3,36 +3,42 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>To: Annusha — the baddest b possible</title>
+  <title>soho whisper</title>
   <style>
     :root {
-      --bg: #0d0f12;
-      --fg: #e9edf1;
-      --muted: #98a2b3;
-      --heart: #ff4da6;
+      --bg: #0f0b14; /* deep plum */
+      --fg: #efeaf3; /* soft ivory */
+      --muted: #b6aeca; /* lavender gray */
+      --heart: #ff7abf; /* soft rose */
       --flag-green: #0a7d35;
       --flag-white: #ffffff;
-      --pole: #6b7280;
+      --pole: #847a99;
     }
     html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); }
     body { display: grid; place-items: center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
     .card {
       width: min(900px, 92vw);
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.08);
+      background:
+        radial-gradient(600px 180px at 20% 10%, rgba(255,182,219,0.08), transparent 40%),
+        radial-gradient(700px 220px at 80% 80%, rgba(240,217,255,0.07), transparent 45%),
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.10);
       border-radius: 14px;
       padding: 20px 22px 16px 22px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45);
       position: relative;
       overflow: hidden;
     }
-    h1 { font-size: 18px; margin: 0 0 8px 0; letter-spacing: 0.3px; }
+    h1 { font-size: 18px; margin: 0 0 8px 0; letter-spacing: 0.4px; font-family: "Playfair Display", Georgia, serif; font-weight: 500; }
     .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; }
     .ps { margin-top: 10px; color: var(--fg); opacity: .9; }
     .small { color: var(--muted); font-size: 12px; }
 
     /* Scene */
-    .scene { position: relative; width: min(900px, 92vw); height: 240px; overflow: hidden; border-radius: 12px; background: radial-gradient(1200px 400px at -10% 120%, rgba(255,255,255,0.05), transparent 40%), radial-gradient(800px 300px at 120% -10%, rgba(255,255,255,0.05), transparent 40%); }
+    .scene { position: relative; width: min(900px, 92vw); height: 260px; overflow: hidden; border-radius: 12px; background:
+      radial-gradient(1200px 420px at -10% 120%, rgba(255,255,255,0.04), transparent 40%),
+      radial-gradient(800px 320px at 120% -10%, rgba(255,255,255,0.04), transparent 40%);
+    }
     .stars { position:absolute; inset:0; background:
       radial-gradient(circle at 10% 20%, rgba(255,255,255,.8) 0 1px, transparent 2px),
       radial-gradient(circle at 30% 80%, rgba(255,255,255,.8) 0 1px, transparent 2px),
@@ -45,8 +51,8 @@
     /* Motion path for plane and hearts */
     .path-anchor { position:absolute; inset:0; }
     .plane { position:absolute; font-family: inherit; color: var(--fg); white-space: pre; line-height: 1.05; filter: drop-shadow(0 1px 0 rgba(0,0,0,.6));
-      offset-path: path('M 20 180 C 250 120, 520 70, 820 150');
-      animation: fly 14s linear infinite; }
+      offset-path: path('M 20 190 C 250 120, 520 70, 820 160');
+      animation: fly 28s linear infinite; }
     @keyframes fly {
       0%   { offset-distance: 0%; transform: translate(-30%, -50%) rotate(6deg); }
       40%  { transform: translate(-30%, -50%) rotate(-3deg); }
@@ -60,15 +66,16 @@
     @keyframes pulse { 0%,100%{opacity:.6; transform: translateY(0);} 50%{opacity:1; transform: translateY(-1px);} }
 
     .heart { position:absolute; color: var(--heart); font-weight: 700; filter: drop-shadow(0 1px 0 rgba(0,0,0,.5));
-      offset-path: path('M 20 180 C 250 120, 520 70, 820 150');
-      animation: trail 14s linear infinite; }
+      text-shadow: 0 0 8px rgba(255,122,191,0.4);
+      offset-path: path('M 20 190 C 250 120, 520 70, 820 160');
+      animation: trail 28s linear infinite; }
     /* Staggered hearts trail behind plane */
-    .heart.h1 { animation-delay: -2s; }
-    .heart.h2 { animation-delay: -4s; }
-    .heart.h3 { animation-delay: -6s; }
-    .heart.h4 { animation-delay: -8s; }
-    .heart.h5 { animation-delay: -10s; }
-    .heart.h6 { animation-delay: -12s; }
+    .heart.h1 { animation-delay: -4s; }
+    .heart.h2 { animation-delay: -8s; }
+    .heart.h3 { animation-delay: -12s; }
+    .heart.h4 { animation-delay: -16s; }
+    .heart.h5 { animation-delay: -20s; }
+    .heart.h6 { animation-delay: -24s; }
     @keyframes trail {
       0%   { offset-distance: 0%; transform: translate(-40%, -50%) scale(0.7); opacity: .0; }
       10%  { opacity:.9; }
@@ -78,37 +85,37 @@
 
     /* Fallback if offset-path unsupported */
     @supports not (offset-path: path('M0,0 L1,1')) {
-      .plane { left: -10%; top: 40%; animation: fly-x 14s linear infinite; }
+      .plane { left: -10%; top: 40%; animation: fly-x 28s linear infinite; }
       .heart { display:none; }
       @keyframes fly-x { from { transform: translateX(0); } to { transform: translateX(120vw); } }
     }
 
     /* Flag block (right) */
-    .flag { display: grid; grid-template-rows: repeat(8, 1em); align-items: center; margin-left: 10px; }
+    .flag { display: grid; grid-template-rows: repeat(8, 1em); align-items: center; margin-left: 10px; filter: drop-shadow(0 6px 16px rgba(255,182,219,0.12)); }
     .pole { color: var(--pole); }
     .flagline { display: inline-block; }
     .flagbody { display: inline-block; width: 18ch; height: 1em; position: relative; overflow: hidden; }
     .stripe-white { background: var(--flag-white); width: 3ch; height: 100%; display: inline-block; vertical-align: top; }
-    .stripe-green { background: var(--flag-green); width: calc(100% - 3ch); height: 100%; display: inline-block; vertical-align: top; position: relative; animation: wave 2.8s ease-in-out infinite; mask-image: linear-gradient(90deg, #000 15%, #000 100%); }
+    .stripe-green { background: var(--flag-green); width: calc(100% - 3ch); height: 100%; display: inline-block; vertical-align: top; position: relative; animation: wave 4.6s ease-in-out infinite; mask-image: linear-gradient(90deg, #000 15%, #000 100%); }
     .crescent, .star { position: absolute; color: var(--flag-white); font-size: .9em; text-shadow: 0 0 4px rgba(255,255,255,.25); animation: shimmer 3.4s ease-in-out infinite; }
     .crescent { left: 5ch; top: 0.05em; }
     .star { left: 9ch; top: 0.1em; animation-delay: .8s; }
     @keyframes wave {
       0% { transform: translateX(0) skewY(0.5deg); filter: brightness(1); }
-      50% { transform: translateX(-0.8ch) skewY(-0.6deg); filter: brightness(1.05); }
+      50% { transform: translateX(-1.0ch) skewY(-0.7deg); filter: brightness(1.06); }
       100% { transform: translateX(0) skewY(0.5deg); filter: brightness(1); }
     }
     @keyframes shimmer { 0%,100%{opacity:.85} 50%{opacity:1} }
   </style>
-  <meta name="description" content="Cute ASCII plane to a waving Pakistani flag for Annusha — with hearts and love." />
-  <meta property="og:title" content="To: Annusha — the baddest b possible" />
-  <meta property="og:description" content="Cute, wholesome, flirty ASCII with hearts and a waving Pakistani flag." />
-  <meta name="theme-color" content="#0a7d35" />
+  <meta name="description" content="a soft soho whisper — a gentle flight of hearts" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#ff7abf" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230a7d35'/%3E%3Crect width='12' height='64' fill='white'/%3E%3Cpath d='M42 26a10 10 0 1 0 0 12 8.5 8.5 0 1 1 0-12z' fill='white'/%3E%3Cpolygon points='44,32 49,34 46,29 46,35 49,30' fill='white'/%3E%3C/svg%3E" />
 </head>
 <body>
   <div class="card" role="img" aria-label="Plane flying toward a waving Pakistani flag with heart contrail and a message to Annusha.">
-    <h1>to: annusha — the baddest b possible</h1>
+    <h1>soho whisper</h1>
     <div class="row">
       <div class="scene" role="img" aria-label="Animated plane flying with heart trail toward a waving Pakistani flag.">
         <div class="stars"></div>
@@ -140,8 +147,8 @@
         <span class="pole">│__|_|____________________</span>
       </div>
     </div>
-    <div class="ps">p.s. sending you love, care, and a flirty tailwind — keep that smile for me <span style="color:var(--heart)">&lt;3</span></div>
-    <div class="small">[ a + annusha ]</div>
+    <div class="ps">a gentle flight of hearts, for her <span style="color:var(--heart)">&lt;3</span></div>
+    <div class="small">[ a + a ]</div>
   </div>
 </body>
 <!-- Self‑contained; perfect for GitHub Pages/Netlify. -->
