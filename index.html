@@ -14,6 +14,7 @@
       --flag-white: #ffffff;
       --pole: #847a99;
     }
+    :root { --frame-ms: 6000; --cut-ms: 420ms; }
     html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); }
     body { display: grid; place-items: center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
     .card {
@@ -130,13 +131,15 @@
       letter-spacing: 0.2px;
       color: var(--fg);
       opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 900ms ease, transform 900ms ease;
+      transform: translateY(6px);
+      transition: opacity var(--cut-ms) cubic-bezier(.2,.6,.2,1), transform var(--cut-ms) cubic-bezier(.2,.6,.2,1);
       padding: 10px 12px;
       text-shadow: 0 1px 0 rgba(0,0,0,.5);
+      will-change: opacity, transform;
+      position: absolute; inset: 0; display: grid; place-items: center;
     }
     .ascii.show { opacity: 1; transform: translateY(0); }
-    .caption { position: absolute; bottom: 10px; left: 12px; font-size: 12px; color: var(--muted); opacity: .8; }
+    .caption { position: absolute; bottom: 10px; left: 12px; font-size: 12px; color: var(--muted); opacity: .8; user-select: none; }
     /* Blossom petals */
     .petals { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
     .petal { position:absolute; top:-10px; color: var(--heart); opacity: .85; font-size: 14px; filter: drop-shadow(0 2px 0 rgba(0,0,0,.35)); animation: fall linear infinite; }
@@ -174,7 +177,8 @@
   <div class="card" role="img" aria-label="Plane flying toward a waving Pakistani flag with heart contrail and a message to Annusha.">
     <h1>soho whisper</h1>
     <div class="slideshow" id="slideshow" role="img" aria-label="Samurai blossom ASCII slideshow for Annusha.">
-      <pre id="asciiFrame" class="ascii"></pre>
+      <pre id="asciiA" class="ascii" aria-live="polite"></pre>
+      <pre id="asciiB" class="ascii" aria-live="polite"></pre>
       <div class="petals" id="petals" aria-hidden="true"></div>
       <div class="orbs" id="orbs" aria-hidden="true"></div>
       <div class="embers" id="embers" aria-hidden="true"></div>
@@ -186,21 +190,34 @@
 </body>
 <script>
   (function(){
-    const frames = [
+    // Config — expert-tuned pacing, can be tweaked quickly
+    const FRAME_MS = 6000;      // time each frame is visible
+    const CUT_MS = 420;         // crossfade duration
+    const FAST_CUT_MS = 280;    // used when user advances manually
+
+    // Frame model — predictable, explicit, zero string sniffing
+    /** @type {{html?:boolean, content:string, caption:string, invert?:boolean, whisper?:boolean, ember?:boolean}[]} */
+    const FRAMES = [
+      {
+        caption: 'chapter i — dusk',
+        content:
 `                      _
                     .:_:.
                  .-"  ◯  "-.
                 /   .-^- .  \
                |   /  |  \   |
-               |   \\__|__/   |     goodnight
+               |   \\\u005f|__/   |     goodnight
                 \\   .---.   /
                  '-._\\_/_.-'
                      /\\\\
            __________/  \\\\__________
           /_________________________\\
           
-          — a quiet cut through dusk —`,
-
+          — a quiet cut through dusk —`
+      },
+      {
+        caption: 'chapter ii — petal wind',
+        content:
 `            .   .   .   .   .   .   .
            / \\ / \\ / \\ / \\ / \\ / \\ / \\   
           |   X   X   X   X   X   X   |   
@@ -208,118 +225,143 @@
 
                  annusha  goodnight
 
-         the wind carries petals and promises`,
-
+         the wind carries petals and promises`
+      },
+      {
+        caption: 'chapter iii — blossom reveal', invert: true,
+        content:
 `        A   N   N   U   S   H   A
         
         ✷    ✷    ✷    ✷    ✷    ✷
         
-   bloom.     blossom.      become.      (for you)
-`,
-
+   bloom.     blossom.      become.      (for you)`
+      },
+      {
+        caption: 'epilogue — whisper orbs', whisper: true,
+        content:
 `           five reasons, plain as moonlight:
 
             1) your name slows my sky
             2) your smile bends orbits
             3) your laugh resets gravity
             4) your kindness softens time
-           5) goodnight, annusha — always, gently, yes`,
-
+            5) goodnight, annusha — always, gently, yes`
+      },
+      {
+        caption: 'finale — ember vow', ember: true, html: true,
+        content:
 `        ꧁༺  ⟡  ༻꧂
 
          <span class="fancyfire">𝒅𝑒𝒂𝒅𝒂𝓼𝓼 𝓶𝔂 𝒄𝓻𝓾𝓼𝒉</span>
 
         ꧁༺  ⟡  ༻꧂`
+      }
     ];
 
-    const captions = [
-      'chapter i — dusk',
-      'chapter ii — petal wind',
-      'chapter iii — blossom reveal',
-      'epilogue — whisper orbs',
-      'finale — ember vow'
-    ];
-
-    const frameEl = document.getElementById('asciiFrame');
     const slideEl = document.getElementById('slideshow');
     const captionEl = document.getElementById('caption');
-    let idx = 0;
+    const frameA = document.getElementById('asciiA');
+    const frameB = document.getElementById('asciiB');
 
-    function show(i){
-      captionEl.textContent = captions[i] || '';
-      frameEl.classList.remove('show');
-      setTimeout(()=>{
-        if (frames[i].includes('<span')) {
-          frameEl.innerHTML = frames[i];
-        } else {
-          frameEl.textContent = frames[i];
-        }
-        frameEl.classList.add('show');
-        // invert on the blossom reveal (index 2), show orbs on epilogue (index 3), embers on finale (index 4)
-        slideEl.classList.toggle('invert', i === 2);
-        slideEl.classList.toggle('whisper', i === 3);
-        slideEl.classList.toggle('ember', i === 4);
-      }, 350);
-    }
+    // Build ambient layers once
+    const petalHost = document.getElementById('petals');
+    const orbsHost = document.getElementById('orbs');
+    const embersHost = document.getElementById('embers');
+
+    const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const reduce = mqReduce.matches;
 
     // Petals
-    const petalHost = document.getElementById('petals');
-    const PETALS = 22;
-    const glyphs = ['✿','❀','✾','✧'];
-    for (let i=0;i<PETALS;i++){
-      const s = document.createElement('span');
-      s.className = 'petal';
-      s.textContent = glyphs[i % glyphs.length];
-      s.style.left = Math.random()*100 + 'vw';
-      const dur = 7 + Math.random()*9; // 7–16s
-      const delay = Math.random()*-dur;
-      s.style.animationDuration = dur + 's';
-      s.style.animationDelay = delay + 's';
-      petalHost.appendChild(s);
+    (function makePetals(){
+      const PETALS = reduce ? 0 : 22;
+      const glyphs = ['✿','❀','✾','✧'];
+      for (let i=0;i<PETALS;i++){
+        const s = document.createElement('span');
+        s.className = 'petal';
+        s.textContent = glyphs[i % glyphs.length];
+        s.style.left = Math.random()*100 + 'vw';
+        const dur = 6 + Math.random()*7; // 6–13s, tighter for smoother feel
+        const delay = Math.random()*-dur;
+        s.style.animationDuration = dur + 's';
+        s.style.animationDelay = delay + 's';
+        petalHost.appendChild(s);
+      }
+    })();
+
+    // Orbs (epilogue)
+    (function makeOrbs(){
+      const ORBS = reduce ? 0 : 12;
+      for (let i=0;i<ORBS;i++){
+        const o = document.createElement('div');
+        o.className = 'orb';
+        const size = 12 + Math.random()*24; // 12–36px
+        o.style.width = size + 'px';
+        o.style.height = size + 'px';
+        o.style.left = Math.random()*100 + 'vw';
+        o.style.top = (10 + Math.random()*70) + 'px';
+        o.style.animationDuration = (6 + Math.random()*6) + 's';
+        o.style.animationDelay = (Math.random()*-6) + 's';
+        orbsHost.appendChild(o);
+      }
+    })();
+
+    // Embers (finale)
+    (function makeEmbers(){
+      const EMBERS = reduce ? 0 : 44;
+      for (let i=0;i<EMBERS;i++){
+        const e = document.createElement('div');
+        e.className = 'spark';
+        e.style.left = (10 + Math.random()*80) + 'vw';
+        e.style.bottom = (Math.random()*12) + 'px';
+        e.style.animationDuration = (3.5 + Math.random()*3) + 's';
+        e.style.animationDelay = (Math.random()*-6) + 's';
+        embersHost.appendChild(e);
+      }
+    })();
+
+    // Crossfade engine (two layers)
+    let i = 0;
+    let useA = true;
+    let timer = null;
+
+    function applyScene(scene){
+      slideEl.classList.toggle('invert', !!scene.invert);
+      slideEl.classList.toggle('whisper', !!scene.whisper);
+      slideEl.classList.toggle('ember', !!scene.ember);
+      captionEl.textContent = scene.caption || '';
     }
 
-    // Orbs for epilogue
-    const orbsHost = document.getElementById('orbs');
-    const ORBS = 10;
-    for (let i=0;i<ORBS;i++){
-      const o = document.createElement('div');
-      o.className = 'orb';
-      const size = 10 + Math.random()*28; // 10–38px
-      o.style.width = size + 'px';
-      o.style.height = size + 'px';
-      o.style.left = Math.random()*100 + 'vw';
-      o.style.top = (10 + Math.random()*70) + 'px';
-      o.style.animationDuration = (6 + Math.random()*6) + 's';
-      o.style.animationDelay = (Math.random()*-6) + 's';
-      orbsHost.appendChild(o);
+    function setContent(el, scene){
+      if (scene.html) el.innerHTML = scene.content; else el.textContent = scene.content;
     }
 
-    // Embers for finale
-    const embersHost = document.getElementById('embers');
-    const EMBERS = 40;
-    for (let i=0;i<EMBERS;i++){
-      const e = document.createElement('div');
-      e.className = 'spark';
-      e.style.left = (10 + Math.random()*80) + 'vw';
-      e.style.bottom = (Math.random()*12) + 'px';
-      e.style.animationDuration = (3.5 + Math.random()*3) + 's';
-      e.style.animationDelay = (Math.random()*-6) + 's';
-      embersHost.appendChild(e);
+    function nextFrame(ms=CUT_MS){
+      const current = FRAMES[i % FRAMES.length];
+      const targetEl = useA ? frameA : frameB;
+      const otherEl = useA ? frameB : frameA;
+
+      // prepare target
+      setContent(targetEl, current);
+      targetEl.classList.add('show');
+      otherEl.classList.remove('show');
+      applyScene(current);
+
+      useA = !useA;
+      clearTimeout(timer);
+      timer = setTimeout(()=> nextFrame(CUT_MS), FRAME_MS);
+      i++;
     }
 
-    // Cycle frames slowly, Samurai-poetic pacing
-    show(idx);
-    setInterval(()=>{
-      idx = (idx + 1) % frames.length;
-      show(idx);
-    }, 9000); // 9s per frame
+    // Start and allow click/tap/keyboard to advance with fast cut
+    nextFrame(CUT_MS);
+    slideEl.addEventListener('click', ()=>{ clearTimeout(timer); nextFrame(FAST_CUT_MS); });
+    window.addEventListener('keydown', (e)=>{
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); clearTimeout(timer); nextFrame(FAST_CUT_MS); }
+    });
 
-    // Respect reduced motion
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (mq.matches){
-      Array.from(document.querySelectorAll('*')).forEach(el=>{
-        el.style.animationDuration = '0s';
-      });
+    // Reduced motion hard stop
+    if (reduce) {
+      document.documentElement.style.setProperty('--cut-ms', '0ms');
     }
   })();
 </script>
