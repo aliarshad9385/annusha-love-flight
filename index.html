@@ -30,7 +30,7 @@
       overflow: hidden;
     }
     h1 { font-size: 18px; margin: 0 0 8px 0; letter-spacing: 0.4px; font-family: "Playfair Display", Georgia, serif; font-weight: 500; }
-    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; }
+    .row { display: none; }
     .ps { margin-top: 10px; color: var(--fg); opacity: .9; }
     .small { color: var(--muted); font-size: 12px; }
 
@@ -106,6 +106,46 @@
       100% { transform: translateX(0) skewY(0.5deg); filter: brightness(1); }
     }
     @keyframes shimmer { 0%,100%{opacity:.85} 50%{opacity:1} }
+    /* Slideshow — Samurai Jack blossom vibe */
+    .slideshow {
+      position: relative;
+      width: min(900px, 92vw);
+      height: 360px;
+      margin-top: 8px;
+      border-radius: 12px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(700px 260px at 10% 90%, rgba(255, 122, 191, 0.06), transparent 45%),
+        radial-gradient(900px 300px at 110% 0%, rgba(255, 255, 255, 0.04), transparent 50%);
+      transition: filter 1.6s ease, background 1.2s ease;
+    }
+    .slideshow.invert { filter: invert(1) hue-rotate(180deg) saturate(1.1); }
+    .ascii {
+      white-space: pre;
+      text-align: center;
+      line-height: 1.15;
+      font-size: clamp(12px, 2.1vw, 18px);
+      letter-spacing: 0.2px;
+      color: var(--fg);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 900ms ease, transform 900ms ease;
+      padding: 10px 12px;
+      text-shadow: 0 1px 0 rgba(0,0,0,.5);
+    }
+    .ascii.show { opacity: 1; transform: translateY(0); }
+    .caption { position: absolute; bottom: 10px; left: 12px; font-size: 12px; color: var(--muted); opacity: .8; }
+    /* Blossom petals */
+    .petals { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .petal { position:absolute; top:-10px; color: var(--heart); opacity: .85; font-size: 14px; filter: drop-shadow(0 2px 0 rgba(0,0,0,.35)); animation: fall linear infinite; }
+    @keyframes fall {
+      0%   { transform: translateY(-10px) translateX(0) rotate(0deg); opacity:.0; }
+      10%  { opacity:.9; }
+      50%  { transform: translateY(50vh) translateX(20px) rotate(120deg); }
+      100% { transform: translateY(110%) translateX(-15px) rotate(260deg); opacity:.0; }
+    }
   </style>
   <meta name="description" content="a soft soho whisper — a gentle flight of hearts" />
   <meta name="robots" content="noindex, nofollow" />
@@ -116,40 +156,101 @@
 <body>
   <div class="card" role="img" aria-label="Plane flying toward a waving Pakistani flag with heart contrail and a message to Annusha.">
     <h1>soho whisper</h1>
-    <div class="row">
-      <div class="scene" role="img" aria-label="Animated plane flying with heart trail toward a waving Pakistani flag.">
-        <div class="stars"></div>
-        <div class="path-anchor">
-          <!-- Trailing hearts along the same path -->
-          <div class="heart h1">&lt;3</div>
-          <div class="heart h2">&lt;3</div>
-          <div class="heart h3">&lt;3</div>
-          <div class="heart h4">&lt;3</div>
-          <div class="heart h5">&lt;3</div>
-          <div class="heart h6">&lt;3</div>
-          <!-- Plane built from ASCII-like lines -->
-          <div class="plane" aria-hidden="true">
-               __|__
-        ---o--o-(<span class="nose">_</span>)-o--o---   <span class="heartline">&lt;3</span>
-                /   \ 
-               /_____\ 
-          </div>
-        </div>
-      </div>
-      <div class="flag">
-        <span class="pole">│</span><span class="flagline"><span class="stripe-white"></span><span class="stripe-green"></span></span>
-        <span class="pole">│</span><span class="flagline"><span class="stripe-white"></span><span class="stripe-green"></span></span>
-        <span class="pole">│</span><span class="flagline"><span class="stripe-white"></span><span class="stripe-green"></span></span>
-        <span class="pole">│</span><span class="flagline"><span class="stripe-white"></span><span class="stripe-green"><span class="crescent">☾</span><span class="star">★</span></span></span>
-        <span class="pole">│</span><span class="flagline"><span class="stripe-white"></span><span class="stripe-green"></span></span>
-        <span class="pole">│</span><span class="flagline"><span class="stripe-white"></span><span class="stripe-green"></span></span>
-        <span class="pole">│</span><span class="flagline"><span class="stripe-white"></span><span class="stripe-green"></span></span>
-        <span class="pole">│__|_|____________________</span>
-      </div>
+    <div class="slideshow" id="slideshow" role="img" aria-label="Samurai blossom ASCII slideshow for Annusha.">
+      <pre id="asciiFrame" class="ascii"></pre>
+      <div class="petals" id="petals" aria-hidden="true"></div>
+      <div class="caption" id="caption">chapter i — dusk</div>
     </div>
     <div class="ps">a gentle flight of hearts, for her <span style="color:var(--heart)">&lt;3</span></div>
     <div class="small">[ a + a ]</div>
   </div>
 </body>
+<script>
+  (function(){
+    const frames = [
+`                      _
+                    .:_:.
+                 .-"  ◯  "-.
+                /   .-^- .  \
+               |   /  |  \   |
+               |   \\__|__/   |     goodnight
+                \\   .---.   /
+                 '-._\\_/_.-'
+                     /\\\\
+           __________/  \\\\__________
+          /_________________________\\
+          
+          — a quiet cut through dusk —`,
+
+`            .   .   .   .   .   .   .
+           / \\ / \\ / \\ / \\ / \\ / \\ / \\   
+          |   X   X   X   X   X   X   |   
+           \\_/ \\_/ \\_/ \\_/ \\_/ \\_/ \\_/   
+
+                 annusha  goodnight
+
+         the wind carries petals and promises`,
+
+`        A   N   N   U   S   H   A
+        
+        ✷    ✷    ✷    ✷    ✷    ✷
+        
+   bloom.     blossom.      become.      (for you)
+`
+    ];
+
+    const captions = [
+      'chapter i — dusk',
+      'chapter ii — petal wind',
+      'final — blossom reveal'
+    ];
+
+    const frameEl = document.getElementById('asciiFrame');
+    const slideEl = document.getElementById('slideshow');
+    const captionEl = document.getElementById('caption');
+    let idx = 0;
+
+    function show(i){
+      captionEl.textContent = captions[i] || '';
+      frameEl.classList.remove('show');
+      setTimeout(()=>{
+        frameEl.textContent = frames[i];
+        frameEl.classList.add('show');
+        slideEl.classList.toggle('invert', i === frames.length - 1);
+      }, 350);
+    }
+
+    // Petals
+    const petalHost = document.getElementById('petals');
+    const PETALS = 22;
+    const glyphs = ['✿','❀','✾','✧'];
+    for (let i=0;i<PETALS;i++){
+      const s = document.createElement('span');
+      s.className = 'petal';
+      s.textContent = glyphs[i % glyphs.length];
+      s.style.left = Math.random()*100 + 'vw';
+      const dur = 7 + Math.random()*9; // 7–16s
+      const delay = Math.random()*-dur;
+      s.style.animationDuration = dur + 's';
+      s.style.animationDelay = delay + 's';
+      petalHost.appendChild(s);
+    }
+
+    // Cycle frames slowly, Samurai-poetic pacing
+    show(idx);
+    setInterval(()=>{
+      idx = (idx + 1) % frames.length;
+      show(idx);
+    }, 9000); // 9s per frame
+
+    // Respect reduced motion
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches){
+      Array.from(document.querySelectorAll('*')).forEach(el=>{
+        el.style.animationDuration = '0s';
+      });
+    }
+  })();
+</script>
 <!-- Self‑contained; perfect for GitHub Pages/Netlify. -->
 </html>
