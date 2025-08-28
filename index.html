@@ -28,30 +28,77 @@
     }
     h1 { font-size: 18px; margin: 0 0 8px 0; letter-spacing: 0.3px; }
     .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; }
-    .art { white-space: pre; line-height: 1.05; color: var(--muted); }
-    .art .plane { color: var(--fg); }
-    .art .hearts { color: var(--heart); animation: pulse 1.5s ease-in-out infinite; }
-    .contrail { color: var(--muted); }
+    .ps { margin-top: 10px; color: var(--fg); opacity: .9; }
+    .small { color: var(--muted); font-size: 12px; }
+
+    /* Scene */
+    .scene { position: relative; width: min(900px, 92vw); height: 240px; overflow: hidden; border-radius: 12px; background: radial-gradient(1200px 400px at -10% 120%, rgba(255,255,255,0.05), transparent 40%), radial-gradient(800px 300px at 120% -10%, rgba(255,255,255,0.05), transparent 40%); }
+    .stars { position:absolute; inset:0; background:
+      radial-gradient(circle at 10% 20%, rgba(255,255,255,.8) 0 1px, transparent 2px),
+      radial-gradient(circle at 30% 80%, rgba(255,255,255,.8) 0 1px, transparent 2px),
+      radial-gradient(circle at 60% 30%, rgba(255,255,255,.8) 0 1px, transparent 2px),
+      radial-gradient(circle at 80% 60%, rgba(255,255,255,.8) 0 1px, transparent 2px),
+      radial-gradient(circle at 45% 55%, rgba(255,255,255,.8) 0 1px, transparent 2px);
+      opacity:.8; animation: twinkle 5s ease-in-out infinite; }
+    @keyframes twinkle { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+    /* Motion path for plane and hearts */
+    .path-anchor { position:absolute; inset:0; }
+    .plane { position:absolute; font-family: inherit; color: var(--fg); white-space: pre; line-height: 1.05; filter: drop-shadow(0 1px 0 rgba(0,0,0,.6));
+      offset-path: path('M 20 180 C 250 120, 520 70, 820 150');
+      animation: fly 14s linear infinite; }
+    @keyframes fly {
+      0%   { offset-distance: 0%; transform: translate(-30%, -50%) rotate(6deg); }
+      40%  { transform: translate(-30%, -50%) rotate(-3deg); }
+      60%  { transform: translate(-30%, -50%) rotate(2deg); }
+      100% { offset-distance: 100%; transform: translate(-30%, -50%) rotate(6deg); }
+    }
+    .plane:hover { animation-duration: 8s; }
+
+    .plane .nose { color: var(--fg); }
+    .plane .heartline { color: var(--heart); animation: pulse 1.5s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:.6; transform: translateY(0);} 50%{opacity:1; transform: translateY(-1px);} }
 
+    .heart { position:absolute; color: var(--heart); font-weight: 700; filter: drop-shadow(0 1px 0 rgba(0,0,0,.5));
+      offset-path: path('M 20 180 C 250 120, 520 70, 820 150');
+      animation: trail 14s linear infinite; }
+    /* Staggered hearts trail behind plane */
+    .heart.h1 { animation-delay: -2s; }
+    .heart.h2 { animation-delay: -4s; }
+    .heart.h3 { animation-delay: -6s; }
+    .heart.h4 { animation-delay: -8s; }
+    .heart.h5 { animation-delay: -10s; }
+    .heart.h6 { animation-delay: -12s; }
+    @keyframes trail {
+      0%   { offset-distance: 0%; transform: translate(-40%, -50%) scale(0.7); opacity: .0; }
+      10%  { opacity:.9; }
+      70%  { opacity:.8; }
+      100% { offset-distance: 100%; transform: translate(-40%, -50%) scale(0.5); opacity: 0; }
+    }
+
+    /* Fallback if offset-path unsupported */
+    @supports not (offset-path: path('M0,0 L1,1')) {
+      .plane { left: -10%; top: 40%; animation: fly-x 14s linear infinite; }
+      .heart { display:none; }
+      @keyframes fly-x { from { transform: translateX(0); } to { transform: translateX(120vw); } }
+    }
+
     /* Flag block (right) */
-    .flag { display: grid; grid-template-rows: repeat(8, 1em); align-items: center; }
+    .flag { display: grid; grid-template-rows: repeat(8, 1em); align-items: center; margin-left: 10px; }
     .pole { color: var(--pole); }
     .flagline { display: inline-block; }
     .flagbody { display: inline-block; width: 18ch; height: 1em; position: relative; overflow: hidden; }
     .stripe-white { background: var(--flag-white); width: 3ch; height: 100%; display: inline-block; vertical-align: top; }
-    .stripe-green { background: var(--flag-green); width: calc(100% - 3ch); height: 100%; display: inline-block; vertical-align: top; position: relative; animation: wave 3.5s linear infinite; mask-image: linear-gradient(90deg, #000 15%, #000 100%); }
-    .crescent, .star { position: absolute; color: var(--flag-white); font-size: .9em; }
+    .stripe-green { background: var(--flag-green); width: calc(100% - 3ch); height: 100%; display: inline-block; vertical-align: top; position: relative; animation: wave 2.8s ease-in-out infinite; mask-image: linear-gradient(90deg, #000 15%, #000 100%); }
+    .crescent, .star { position: absolute; color: var(--flag-white); font-size: .9em; text-shadow: 0 0 4px rgba(255,255,255,.25); animation: shimmer 3.4s ease-in-out infinite; }
     .crescent { left: 5ch; top: 0.05em; }
-    .star { left: 9ch; top: 0.1em; }
+    .star { left: 9ch; top: 0.1em; animation-delay: .8s; }
     @keyframes wave {
-      0% { transform: translateX(0) skewY(0.3deg); }
-      50% { transform: translateX(-0.6ch) skewY(-0.3deg); }
-      100% { transform: translateX(0) skewY(0.3deg); }
+      0% { transform: translateX(0) skewY(0.5deg); filter: brightness(1); }
+      50% { transform: translateX(-0.8ch) skewY(-0.6deg); filter: brightness(1.05); }
+      100% { transform: translateX(0) skewY(0.5deg); filter: brightness(1); }
     }
-
-    .ps { margin-top: 10px; color: var(--fg); opacity: .9; }
-    .small { color: var(--muted); font-size: 12px; }
+    @keyframes shimmer { 0%,100%{opacity:.85} 50%{opacity:1} }
   </style>
   <meta name="description" content="Cute ASCII plane to a waving Pakistani flag for Annusha — with hearts and love." />
   <meta property="og:title" content="To: Annusha — the baddest b possible" />
@@ -63,21 +110,24 @@
   <div class="card" role="img" aria-label="Plane flying toward a waving Pakistani flag with heart contrail and a message to Annusha.">
     <h1>to: annusha — the baddest b possible</h1>
     <div class="row">
-      <div class="art" aria-hidden="true">
-        <span>      ~   .     ~     .      ~     .      ~    .   ~   .</span>
-        <br />
-        <span>        .    ~     .    ~      .     ~       .     ~   .</span>
-        <br /><br />
-        <span class="plane">               __|__</span>
-        <br />
-        <span class="contrail">        ---o--o-(</span><span class="plane">_</span><span class="contrail">)-o--o---</span>
-        <span class="hearts">   &lt;3  &lt;3  &lt;3</span>
-        <br />
-        <span class="contrail">                /   \ </span>
-        <br />
-        <span class="contrail">               /_____\ </span>
-        <br />
-        <span class="contrail">                          -------------------------------&gt;</span>
+      <div class="scene" role="img" aria-label="Animated plane flying with heart trail toward a waving Pakistani flag.">
+        <div class="stars"></div>
+        <div class="path-anchor">
+          <!-- Trailing hearts along the same path -->
+          <div class="heart h1">&lt;3</div>
+          <div class="heart h2">&lt;3</div>
+          <div class="heart h3">&lt;3</div>
+          <div class="heart h4">&lt;3</div>
+          <div class="heart h5">&lt;3</div>
+          <div class="heart h6">&lt;3</div>
+          <!-- Plane built from ASCII-like lines -->
+          <div class="plane" aria-hidden="true">
+               __|__
+        ---o--o-(<span class="nose">_</span>)-o--o---   <span class="heartline">&lt;3</span>
+                /   \ 
+               /_____\ 
+          </div>
+        </div>
       </div>
       <div class="flag">
         <span class="pole">│</span><span class="flagline"><span class="stripe-white"></span><span class="stripe-green"></span></span>
@@ -96,4 +146,3 @@
 </body>
 <!-- Self‑contained; perfect for GitHub Pages/Netlify. -->
 </html>
-
